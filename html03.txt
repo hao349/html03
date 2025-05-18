@@ -1,0 +1,82 @@
+use streamingDB
+
+db.movies.insertMany([
+  {
+    title: "Inception",
+    genre: "Sci-Fi",
+    release_year: 2010,
+    rating: 8.8,
+    duration: 148,
+    is_available: true,
+    cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt"]
+  },
+  {
+    title: "Titanic",
+    genre: "Drama",
+    release_year: 1997,
+    rating: 7.8,
+    duration: 195,
+    is_available: true,
+    cast: ["Leonardo DiCaprio", "Kate Winslet"]
+  },
+  {
+    title: "Avengers: Endgame",
+    genre: "Action",
+    release_year: 2019,
+    rating: 8.4,
+    duration: 181,
+    is_available: false,
+    cast: ["Robert Downey Jr.", "Chris Evans"]
+  },
+  {
+    title: "Joker",
+    genre: "Drama",
+    release_year: 2019,
+    rating: 8.5,
+    duration: 122,
+    is_available: true,
+    cast: ["Joaquin Phoenix", "Robert De Niro"]
+  },
+  {
+    title: "Interstellar",
+    genre: "Sci-Fi",
+    release_year: 2014,
+    rating: 8.6,
+    duration: 169,
+    is_available: true,
+    cast: ["Matthew McConaughey", "Anne Hathaway"]
+  }
+])
+
+db.movies.find({ genre: "Drama", rating: { $gte: 8 } })
+
+db.movies.find({ is_available: true, duration: { $lt: 90 } })
+
+db.movies.find({ cast: "Robert Downey Jr." })
+
+db.movies.countDocuments({ release_year: { $gt: 2015 } })
+
+db.movies.updateMany(
+  { genre: "Comedy" },
+  [{ $set: { rating: { $min: [10, { $add: ["$rating", 0.5] }] } } }]
+)
+
+db.movies.updateMany(
+  { release_year: { $lt: 2000 } },
+  { $set: { is_available: false } }
+)
+
+db.movies.aggregate([
+  { $group: { _id: "$genre", count: { $sum: 1 } } }
+])
+
+db.movies.aggregate([
+  { $match: { genre: "Action" } },
+  { $group: { _id: null, avgDuration: { $avg: "$duration" } } }
+])
+
+db.movies.aggregate([
+  { $sort: { rating: -1 } },
+  { $project: { title: 1, rating: 1, genre: 1, _id: 0 } },
+  { $limit: 3 }
+])
