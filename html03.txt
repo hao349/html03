@@ -2,13 +2,13 @@ use streamingDB
 
 db.movies.insertMany([
   {
-    title: "Inception",
-    genre: "Sci-Fi",
-    release_year: 2010,
-    rating: 8.8,
-    duration: 148,
+    title: "Avengers: Endgame",
+    genre: "Action",
+    release_year: 2019,
+    rating: 8.4,
+    duration: 181,
     is_available: true,
-    cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt"]
+    cast: ["Robert Downey Jr.", "Chris Evans"]
   },
   {
     title: "Titanic",
@@ -20,22 +20,22 @@ db.movies.insertMany([
     cast: ["Leonardo DiCaprio", "Kate Winslet"]
   },
   {
-    title: "Avengers: Endgame",
-    genre: "Action",
-    release_year: 2019,
-    rating: 8.4,
-    duration: 181,
-    is_available: false,
-    cast: ["Robert Downey Jr.", "Chris Evans"]
-  },
-  {
     title: "Joker",
     genre: "Drama",
     release_year: 2019,
     rating: 8.5,
     duration: 122,
     is_available: true,
-    cast: ["Joaquin Phoenix", "Robert De Niro"]
+    cast: ["Joaquin Phoenix", "Zazie Beetz"]
+  },
+  {
+    title: "The Hangover",
+    genre: "Comedy",
+    release_year: 2009,
+    rating: 7.7,
+    duration: 100,
+    is_available: false,
+    cast: ["Bradley Cooper", "Zach Galifianakis"]
   },
   {
     title: "Interstellar",
@@ -45,20 +45,74 @@ db.movies.insertMany([
     duration: 169,
     is_available: true,
     cast: ["Matthew McConaughey", "Anne Hathaway"]
+  },
+  {
+    title: "Toy Story",
+    genre: "Comedy",
+    release_year: 1995,
+    rating: 8.3,
+    duration: 81,
+    is_available: true,
+    cast: ["Tom Hanks", "Tim Allen"]
+  },
+  {
+    title: "Inception",
+    genre: "Action",
+    release_year: 2010,
+    rating: 8.8,
+    duration: 148,
+    is_available: true,
+    cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt"]
+  },
+  {
+    title: "The Matrix",
+    genre: "Sci-Fi",
+    release_year: 1999,
+    rating: 8.7,
+    duration: 136,
+    is_available: false,
+    cast: ["Keanu Reeves", "Laurence Fishburne"]
+  },
+  {
+    title: "Forrest Gump",
+    genre: "Drama",
+    release_year: 1994,
+    rating: 8.8,
+    duration: 142,
+    is_available: true,
+    cast: ["Tom Hanks", "Robin Wright"]
+  },
+  {
+    title: "The Room",
+    genre: "Drama",
+    release_year: 2003,
+    rating: 3.7,
+    duration: 99,
+    is_available: false,
+    cast: ["Tommy Wiseau", "Juliette Danielle"]
   }
 ])
 
 db.movies.find({ genre: "Drama", rating: { $gte: 8 } })
-
 db.movies.find({ is_available: true, duration: { $lt: 90 } })
-
 db.movies.find({ cast: "Robert Downey Jr." })
-
 db.movies.countDocuments({ release_year: { $gt: 2015 } })
 
 db.movies.updateMany(
   { genre: "Comedy" },
-  [{ $set: { rating: { $min: [10, { $add: ["$rating", 0.5] }] } } }]
+  [
+    {
+      $set: {
+        rating: {
+          $cond: {
+            if: { $gte: [{ $add: ["$rating", 0.5] }, 10] },
+            then: 10,
+            else: { $add: ["$rating", 0.5] }
+          }
+        }
+      }
+    }
+  ]
 )
 
 db.movies.updateMany(
@@ -66,17 +120,35 @@ db.movies.updateMany(
   { $set: { is_available: false } }
 )
 
+db.movies.updateOne(
+  { title: "Titanic", cast: { $ne: "classic" } },
+  { $push: { cast: "classic" } }
+)
+
+db.movies.deleteMany({ rating: { $lt: 4 } })
+
 db.movies.aggregate([
   { $group: { _id: "$genre", count: { $sum: 1 } } }
 ])
 
 db.movies.aggregate([
   { $match: { genre: "Action" } },
-  { $group: { _id: null, avgDuration: { $avg: "$duration" } } }
+  { $group: { _id: null, avg_duration: { $avg: "$duration" } } }
 ])
 
 db.movies.aggregate([
   { $sort: { rating: -1 } },
-  { $project: { title: 1, rating: 1, genre: 1, _id: 0 } },
-  { $limit: 3 }
+  { $limit: 3 },
+  { $project: { title: 1, rating: 1, genre: 1 } }
 ])
+
+db.movies.createIndex({ genre: 1, rating: 1 })
+db.movies.createIndex({ title: "text", cast: "text" })
+
+db.movies.updateOne(
+  { title: "Inception" },
+  { $set: { reviews: [
+    { username: "user01", comment: "Great plot", stars: 5 },
+    { username: "user02", comment: "Mind-blowing", stars: 4 }
+  ] } }
+)
